@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>メモ入力</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .color-chip {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #ddd;
+            transition: all 0.2s;
+        }
+        .color-chip:hover {
+            transform: scale(1.1);
+        }
+        .color-chip.active {
+            box-shadow: 0 0 0 2px #555;
+        }
+    </style>
+</head>
+<body class="container py-4">
+    <h1 class="h3 mb-4" th:text="${memo.id == null ? 'メモを新しく書く' : 'メモを編集する'}"></h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form th:action="@{/memos}" th:object="${memo}" method="post">
+                <input type="hidden" th:field="*{id}">
+
+                <div class="mb-3">
+                    <label class="form-label">タイトル</label>
+                    <input type="text" th:field="*{title}" class="form-control" 
+                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="categorySelect" class="form-label">カテゴリ</label>
+                    <select name="categoryId" id="categorySelect" class="form-select">
+                        <option value="">-- カテゴリを選択（任意） --</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" 
+                                th:text="${cat.name}" th:selected="${memo.category != null && memo.category.id == cat.id}"></option>
+                        <option value="new">+ 新しく作る</option>
+                    </select>
+                </div>
+
+                <div id="newCategoryArea" class="card bg-light mb-3 d-none">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">新しいカテゴリ名</label>
+                            <input type="text" name="newCategoryName" id="newCategoryName" class="form-control" placeholder="カテゴリ名を入力">
+                            <div class="form-text">保存すると自動的に新しいカテゴリが登録されます。</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">カテゴリの色を選択</label>
+                            <div class="d-flex flex-wrap gap-2 pt-1" id="palette">
+                                <div class="color-chip active" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                                <div class="color-chip" style="background-color: #ffadad;" data-color="#ffadad"></div>
+                                <div class="color-chip" style="background-color: #ffd6a5;" data-color="#ffd6a5"></div>
+                                <div class="color-chip" style="background-color: #fdffb6;" data-color="#fdffb6"></div>
+                                <div class="color-chip" style="background-color: #caffbf;" data-color="#caffbf"></div>
+                                <div class="color-chip" style="background-color: #9bf6ff;" data-color="#9bf6ff"></div>
+                                <div class="color-chip" style="background-color: #a0c4ff;" data-color="#a0c4ff"></div>
+                                <div class="color-chip" style="background-color: #bdb2ff;" data-color="#bdb2ff"></div>
+                                <div class="color-chip" style="background-color: #ffc6ff;" data-color="#ffc6ff"></div>
+                                <div class="color-chip" style="background-color: #e2e2e2;" data-color="#e2e2e2"></div>
+                                <div class="color-chip" style="background-color: #ffcaaf;" data-color="#ffcaaf"></div>
+                                <div class="color-chip" style="background-color: #dabfff;" data-color="#dabfff"></div>
+                                <div class="color-chip" style="background-color: #90dbf4;" data-color="#90dbf4"></div>
+                                <div class="color-chip" style="background-color: #b9fbc0;" data-color="#b9fbc0"></div>
+                                <div class="color-chip" style="background-color: #fbf8cc;" data-color="#fbf8cc"></div>
+                                <div class="color-chip" style="background-color: #ffcfd2;" data-color="#ffcfd2"></div>
+                            </div>
+                            <input type="hidden" name="newCategoryColor" id="newCategoryColor" value="#ffffff">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">内容</label>
+                    <textarea th:field="*{content}" class="form-control" rows="8"
+                              th:classappend="${#fields.hasErrors('content')} ? 'is-invalid'"></textarea>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a th:href="@{/memos}" class="btn btn-outline-secondary">キャンセル</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <span th:text="${memo.id == null ? '保存する' : '更新する'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categorySelect = document.getElementById('categorySelect');
+            const newCategoryArea = document.getElementById('newCategoryArea');
+            const newCategoryName = document.getElementById('newCategoryName');
+            const chips = document.querySelectorAll('.color-chip');
+            const colorInput = document.getElementById('newCategoryColor');
+
+            // 1. セレクトボックスの表示切り替え
+            function toggleNewCategory() {
+                if (categorySelect.value === 'new') {
+                    newCategoryArea.classList.remove('d-none');
+                    newCategoryName.required = true;
+                } else {
+                    newCategoryArea.classList.add('d-none');
+                    newCategoryName.required = false;
+                    newCategoryName.value = "";
+                }
+            }
+
+            categorySelect.addEventListener('change', toggleNewCategory);
+            toggleNewCategory(); // 初期表示チェック
+
+            // 2. カラーパレットの選択
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelector('.color-chip.active').classList.remove('active');
+                    chip.classList.add('active');
+                    colorInput.value = chip.getAttribute('data-color');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

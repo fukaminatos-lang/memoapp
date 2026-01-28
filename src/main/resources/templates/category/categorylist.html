@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>カテゴリ管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        /* カラーチップのスタイル */
+        .color-chip {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #ddd;
+            transition: all 0.2s ease;
+        }
+        .color-chip:hover {
+            transform: scale(1.15);
+        }
+        .color-chip.active {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px #555; /* 選択中を強調 */
+        }
+        .form-control-color-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">カテゴリ管理</h1>
+        <a th:href="@{/memos}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> メモ一覧に戻る
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">新しいカテゴリを追加</div>
+        <div class="card-body">
+            <form th:action="@{/categories/save}" method="post" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label">カテゴリ名</label>
+                    <input type="text" name="name" class="form-control" placeholder="例：仕事、趣味" required>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label">表示色を選択</label>
+                    <div class="d-flex flex-wrap gap-2 pt-1" id="palette">
+                        <div class="color-chip active" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                        <div class="color-chip" style="background-color: #ffadad;" data-color="#ffadad"></div>
+                        <div class="color-chip" style="background-color: #ffd6a5;" data-color="#ffd6a5"></div>
+                        <div class="color-chip" style="background-color: #fdffb6;" data-color="#fdffb6"></div>
+                        <div class="color-chip" style="background-color: #caffbf;" data-color="#caffbf"></div>
+                        <div class="color-chip" style="background-color: #9bf6ff;" data-color="#9bf6ff"></div>
+                        <div class="color-chip" style="background-color: #a0c4ff;" data-color="#a0c4ff"></div>
+                        <div class="color-chip" style="background-color: #bdb2ff;" data-color="#bdb2ff"></div>
+                        <div class="color-chip" style="background-color: #ffc6ff;" data-color="#ffc6ff"></div>
+                        <div class="color-chip" style="background-color: #fffffc;" data-color="#fffffc"></div>
+                        <div class="color-chip" style="background-color: #e2e2e2;" data-color="#e2e2e2"></div>
+                        <div class="color-chip" style="background-color: #ffcaaf;" data-color="#ffcaaf"></div>
+                        <div class="color-chip" style="background-color: #dabfff;" data-color="#dabfff"></div>
+                        <div class="color-chip" style="background-color: #90dbf4;" data-color="#90dbf4"></div>
+                        <div class="color-chip" style="background-color: #b9fbc0;" data-color="#b9fbc0"></div>
+                        <div class="color-chip" style="background-color: #fbf8cc;" data-color="#fbf8cc"></div>
+                    </div>
+                    <input type="hidden" name="color" id="selectedColor" value="#ffffff">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary px-5">追加する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>プレビュー</th>
+                        <th>カテゴリ名</th>
+                        <th>カラーコード</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="cat : ${categories}">
+                        <td class="align-middle">
+                            <span class="badge rounded-pill" 
+                                  th:style="'background-color:' + ${cat.color} + '; color: #000 !important; border: 1px solid rgba(0,0,0,0.1);'"
+                                  th:text="${cat.name}"></span>
+                        </td>
+                        <td th:text="${cat.name}" class="align-middle"></td>
+                        <td th:text="${cat.color}" class="align-middle text-muted small font-monospace"></td>
+                        <td class="text-end align-middle">
+                            <form th:action="@{/categories/{id}/delete(id=${cat.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                        onclick="return confirm('このカテゴリーを削除しますか？\n\n【警告】\nこのカテゴリーに属するすべてのメモも一緒に削除されます。')">
+                                    <i class="bi bi-trash"></i> 削除
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(categories)}">
+                        <td colspan="4" class="text-center py-4 text-muted">カテゴリがまだありません。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // カラーパレットの選択制御
+        const chips = document.querySelectorAll('.color-chip');
+        const hiddenInput = document.getElementById('selectedColor');
+
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                // 前のアクティブを解除
+                document.querySelector('.color-chip.active').classList.remove('active');
+                // 今回クリックしたものをアクティブに
+                chip.classList.add('active');
+                // hidden inputに値を反映
+                hiddenInput.value = chip.getAttribute('data-color');
+            });
+        });
+    </script>
+</body>
+</html>
